@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08111f" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Trình xem VR360 Di tích Quốc gia Đặc biệt Đồng Khởi Bến Tre trên GitHub Pages." />
+  <meta property="og:title" content="VR360 · Đồng Khởi Bến Tre" />
+  <meta property="og:description" content="Trải nghiệm thực tế ảo 360° trong giao diện tối giản, toàn màn hình." />
+  <meta property="og:type" content="website" />
+  <title>VR360 · Đồng Khởi Bến Tre</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #050a12;
+      --panel: rgba(8, 17, 31, .88);
+      --panel-strong: #08111f;
+      --text: #f5f7fb;
+      --muted: #94a3b8;
+      --line: rgba(148, 163, 184, .18);
+      --accent: #f5a524;
+      --accent-2: #ffd166;
+      --ok: #34d399;
+      --danger: #fb7185;
+      --shadow: 0 18px 60px rgba(0, 0, 0, .35);
+      --radius: 18px;
+      --topbar-h: 64px;
+      --bottombar-h: 44px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; margin: 0; }
+    body {
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(245, 165, 36, .08), transparent 28%),
+        radial-gradient(circle at 85% 0%, rgba(56, 189, 248, .06), transparent 25%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a { font: inherit; }
+    button { color: inherit; }
+    .app { height: 100dvh; display: grid; grid-template-rows: var(--topbar-h) 1fr var(--bottombar-h); }
+
+    .topbar {
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 16px;
+      background: linear-gradient(180deg, rgba(8,17,31,.98), rgba(8,17,31,.88));
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand { min-width: 0; display: flex; align-items: center; gap: 11px; }
+    .brand-mark {
+      width: 38px; height: 38px; flex: 0 0 auto;
+      display: grid; place-items: center;
+      border: 1px solid rgba(245,165,36,.34);
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(245,165,36,.18), rgba(245,165,36,.05));
+      box-shadow: inset 0 1px rgba(255,255,255,.06);
+    }
+    .brand-copy { min-width: 0; }
+    .brand-copy strong { display: block; font-size: 14px; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand-copy span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .actions { display: flex; align-items: center; gap: 8px; }
+    .btn {
+      height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 0 12px; border: 1px solid var(--line); border-radius: 11px;
+      background: rgba(255,255,255,.045); color: var(--text); cursor: pointer;
+      text-decoration: none; transition: .18s ease; user-select: none;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(245,165,36,.42); background: rgba(245,165,36,.09); }
+    .btn.primary { border-color: rgba(245,165,36,.48); background: rgba(245,165,36,.14); }
+    .btn .label { font-size: 12px; }
+
+    .viewer-wrap { position: relative; min-height: 0; overflow: hidden; background: #000; }
+    #vrFrame { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+
+    .loading, .fallback {
+      position: absolute; inset: 0; z-index: 12;
+      display: grid; place-items: center;
+      background: radial-gradient(circle at center, #0d1726 0%, #050a12 70%);
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+    .loading.hidden, .fallback.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .loader-card { width: min(92vw, 390px); text-align: center; }
+    .spinner {
+      width: 48px; height: 48px; margin: 0 auto 18px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.11); border-top-color: var(--accent);
+      animation: spin .85s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-card h1 { margin: 0; font-size: 18px; }
+    .loader-card p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+    .fallback-card {
+      width: min(92vw, 480px); padding: 24px; border: 1px solid var(--line); border-radius: var(--radius);
+      background: rgba(8,17,31,.92); box-shadow: var(--shadow); text-align: center;
+    }
+    .fallback-card h2 { margin: 12px 0 6px; font-size: 18px; }
+    .fallback-card p { margin: 0 auto 18px; max-width: 390px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .fallback-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+    .network-banner {
+      position: absolute; z-index: 20; left: 50%; top: 14px; transform: translateX(-50%) translateY(-12px);
+      padding: 8px 12px; border: 1px solid rgba(251,113,133,.3); border-radius: 999px;
+      background: rgba(88, 19, 38, .88); color: #ffe4e6; font-size: 12px;
+      opacity: 0; pointer-events: none; transition: .2s ease; backdrop-filter: blur(12px);
+    }
+    .network-banner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .drawer {
+      position: absolute; z-index: 25; top: 14px; right: 14px; bottom: 14px;
+      width: min(370px, calc(100vw - 28px)); padding: 18px;
+      border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(18px);
+      transform: translateX(calc(100% + 24px)); transition: transform .26s ease;
+      overflow: auto;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .drawer h2 { margin: 0; font-size: 16px; }
+    .drawer .eyebrow { margin-bottom: 6px; color: var(--accent-2); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .icon-btn { width: 32px; height: 32px; padding: 0; border-radius: 10px; }
+    .drawer p { color: #cbd5e1; font-size: 12.5px; line-height: 1.7; }
+    .drawer-section { padding: 14px 0; border-top: 1px solid var(--line); }
+    .drawer-section:first-of-type { margin-top: 14px; }
+    .shortcut { display: flex; justify-content: space-between; gap: 16px; margin: 8px 0; color: #cbd5e1; font-size: 12px; }
+    kbd { min-width: 28px; padding: 3px 7px; border: 1px solid var(--line); border-bottom-color: rgba(255,255,255,.22); border-radius: 7px; background: rgba(255,255,255,.055); text-align: center; color: var(--text); font-size: 10px; }
+
+    .bottombar {
+      z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 0 14px; background: var(--panel-strong); border-top: 1px solid var(--line); color: var(--muted);
+      font-size: 11px;
+    }
+    .status { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 4px rgba(52,211,153,.08); }
+    .dot.offline { background: var(--danger); box-shadow: 0 0 0 4px rgba(251,113,133,.08); }
+    .source { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .source a { color: #cbd5e1; text-decoration: none; }
+    .source a:hover { color: var(--accent-2); }
+
+    body.chrome-hidden .topbar, body.chrome-hidden .bottombar { display: none; }
+    body.chrome-hidden .app { grid-template-rows: 1fr; }
+
+    @media (max-width: 720px) {
+      :root { --topbar-h: 58px; --bottombar-h: 38px; }
+      .topbar { padding: 0 10px; }
+      .brand-copy span { display: none; }
+      .btn { width: 36px; padding: 0; }
+      .btn .label { display: none; }
+      .bottombar { padding: 0 10px; }
+      .source { max-width: 58vw; }
+      .drawer { top: 8px; right: 8px; bottom: 8px; width: calc(100vw - 16px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">◉</div>
+        <div class="brand-copy">
+          <strong>VR360 · Đồng Khởi Bến Tre</strong>
+          <span>Di tích Quốc gia Đặc biệt · Trải nghiệm thực tế ảo 360°</span>
+        </div>
+      </div>
+
+      <nav class="actions" aria-label="Điều khiển trình xem">
+        <button class="btn" id="reloadBtn" type="button" title="Tải lại (R)"><span>↻</span><span class="label">Tải lại</span></button>
+        <button class="btn" id="infoBtn" type="button" title="Thông tin (I)"><span>ⓘ</span><span class="label">Thông tin</span></button>
+        <button class="btn" id="fullBtn" type="button" title="Toàn màn hình (F)"><span>⛶</span><span class="label">Toàn màn hình</span></button>
+        <a class="btn primary" id="openBtn" href="https://vr360.com.vn/projects/di-tich-quoc-gia-dac-biet-dong-khoi-ben-tre/" target="_blank" rel="noopener noreferrer" title="Mở nguồn VR"><span>↗</span><span class="label">Mở VR gốc</span></a>
+      </nav>
+    </header>
+
+    <main class="viewer-wrap" id="viewerWrap">
+      <iframe
+        id="vrFrame"
+        title="VR360 Di tích Quốc gia Đặc biệt Đồng Khởi Bến Tre"
+        src="https://vr360.com.vn/projects/di-tich-quoc-gia-dac-biet-dong-khoi-ben-tre/"
+        allow="autoplay; fullscreen; xr-spatial-tracking; gyroscope; accelerometer; magnetometer"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
+
+      <div class="loading" id="loading" aria-live="polite">
+        <div class="loader-card">
+          <div class="spinner" aria-hidden="true"></div>
+          <h1>Đang kết nối không gian VR360</h1>
+          <p>Giao diện GitHub Pages đang tải trình xem từ nguồn VR360 gốc.</p>
+        </div>
+      </div>
+
+      <div class="fallback hidden" id="fallback" aria-live="polite">
+        <div class="fallback-card">
+          <div style="font-size:38px" aria-hidden="true">◎</div>
+          <h2>Chưa hiển thị được nội dung VR</h2>
+          <p>Trình xem 360° được cung cấp từ một tên miền bên ngoài. Hãy kiểm tra kết nối mạng, thử tải lại hoặc mở trực tiếp nguồn VR gốc.</p>
+          <div class="fallback-actions">
+            <button class="btn" id="retryBtn" type="button">↻ Thử lại</button>
+            <a class="btn primary" href="https://vr360.com.vn/projects/di-tich-quoc-gia-dac-biet-dong-khoi-ben-tre/" target="_blank" rel="noopener noreferrer">↗ Mở VR gốc</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="network-banner" id="networkBanner">Mất kết nối Internet · giao diện vẫn hoạt động nhưng VR gốc có thể không tải được.</div>
+
+      <aside class="drawer" id="drawer" aria-label="Thông tin" aria-hidden="true">
+        <div class="drawer-head">
+          <div>
+            <div class="eyebrow">VR360 Viewer</div>
+            <h2>Đồng Khởi Bến Tre</h2>
+          </div>
+          <button class="btn icon-btn" id="closeDrawerBtn" type="button" aria-label="Đóng">×</button>
+        </div>
+
+        <div class="drawer-section">
+          <p>Trang này là lớp trình xem tối giản dành cho GitHub Pages. Nội dung panorama/VR được nhúng trực tiếp từ dự án VR360 gốc; trang này không sao chép hoặc giả lập dữ liệu 360° của máy chủ nguồn.</p>
+        </div>
+
+        <div class="drawer-section">
+          <div class="eyebrow">Điều khiển nhanh</div>
+          <div class="shortcut"><span>Toàn màn hình</span><kbd>F</kbd></div>
+          <div class="shortcut"><span>Tải lại VR</span><kbd>R</kbd></div>
+          <div class="shortcut"><span>Mở/đóng thông tin</span><kbd>I</kbd></div>
+          <div class="shortcut"><span>Ẩn/hiện giao diện</span><kbd>H</kbd></div>
+          <div class="shortcut"><span>Đóng bảng</span><kbd>Esc</kbd></div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="eyebrow">Chế độ ngoại tuyến</div>
+          <p>Service Worker chỉ lưu “vỏ” GitHub Pages cùng tài nguyên cùng tên miền. Tài nguyên VR thuộc <strong>vr360.com.vn</strong> vẫn cần mạng trừ khi được chủ nguồn cung cấp gói dữ liệu offline riêng.</p>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="bottombar">
+      <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Đang kiểm tra kết nối…</span></div>
+      <div class="source">Nguồn VR: <a href="https://vr360.com.vn/projects/di-tich-quoc-gia-dac-biet-dong-khoi-ben-tre/" target="_blank" rel="noopener noreferrer">vr360.com.vn</a></div>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const VR_URL = 'https://vr360.com.vn/projects/di-tich-quoc-gia-dac-biet-dong-khoi-ben-tre/';
+      const frame = document.getElementById('vrFrame');
+      const loading = document.getElementById('loading');
+      const fallback = document.getElementById('fallback');
+      const viewerWrap = document.getElementById('viewerWrap');
+      const drawer = document.getElementById('drawer');
+      const networkBanner = document.getElementById('networkBanner');
+      const statusDot = document.getElementById('statusDot');
+      const statusText = document.getElementById('statusText');
+      let loadTimer;
+
+      function setLoading(active) {
+        loading.classList.toggle('hidden', !active);
+        if (active) fallback.classList.add('hidden');
+      }
+
+      function showFallback() {
+        setLoading(false);
+        fallback.classList.remove('hidden');
+      }
+
+      function armTimeout() {
+        clearTimeout(loadTimer);
+        loadTimer = setTimeout(() => {
+          if (!navigator.onLine) showFallback();
+          else setLoading(false);
+        }, 12000);
+      }
+
+      function reloadViewer() {
+        setLoading(true);
+        fallback.classList.add('hidden');
+        frame.src = 'about:blank';
+        setTimeout(() => {
+          frame.src = VR_URL + (VR_URL.includes('?') ? '&' : '?') + '_=' + Date.now();
+          armTimeout();
+        }, 80);
+      }
+
+      function updateNetwork() {
+        const online = navigator.onLine;
+        statusDot.classList.toggle('offline', !online);
+        statusText.textContent = online ? 'Đang trực tuyến' : 'Đang ngoại tuyến';
+        networkBanner.classList.toggle('show', !online);
+        if (!online) clearTimeout(loadTimer);
+      }
+
+      async function toggleFullscreen() {
+        try {
+          if (!document.fullscreenElement) await viewerWrap.requestFullscreen();
+          else await document.exitFullscreen();
+        } catch (error) {
+          console.warn('Không thể bật toàn màn hình:', error);
+        }
+      }
+
+      function setDrawer(open) {
+        drawer.classList.toggle('open', open);
+        drawer.setAttribute('aria-hidden', String(!open));
+      }
+
+      frame.addEventListener('load', () => {
+        clearTimeout(loadTimer);
+        setTimeout(() => setLoading(false), 350);
+      });
+
+      document.getElementById('reloadBtn').addEventListener('click', reloadViewer);
+      document.getElementById('retryBtn').addEventListener('click', reloadViewer);
+      document.getElementById('fullBtn').addEventListener('click', toggleFullscreen);
+      document.getElementById('infoBtn').addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+      document.getElementById('closeDrawerBtn').addEventListener('click', () => setDrawer(false));
+      window.addEventListener('online', updateNetwork);
+      window.addEventListener('offline', updateNetwork);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.target && /input|textarea|select/i.test(event.target.tagName)) return;
+        const key = event.key.toLowerCase();
+        if (key === 'f') toggleFullscreen();
+        if (key === 'r') reloadViewer();
+        if (key === 'i') setDrawer(!drawer.classList.contains('open'));
+        if (key === 'h') document.body.classList.toggle('chrome-hidden');
+        if (event.key === 'Escape') setDrawer(false);
+      });
+
+      updateNetwork();
+      armTimeout();
+
+      if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(error => {
+            console.warn('Không thể đăng ký Service Worker:', error);
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
