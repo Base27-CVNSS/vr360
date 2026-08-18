@@ -1,0 +1,19 @@
+{
+  "name": "VR360 · Đồng Khởi Bến Tre",
+  "short_name": "VR360 Bến Tre",
+  "description": "Trình xem VR360 Di tích Quốc gia Đặc biệt Đồng Khởi Bến Tre.",
+  "lang": "vi",
+  "start_url": "/vr360/",
+  "scope": "/vr360/",
+  "display": "standalone",
+  "background_color": "#050a12",
+  "theme_color": "#08111f",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
